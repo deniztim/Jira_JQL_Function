@@ -1,0 +1,3 @@
+com\example\plugins\tutorial\jira\api\MyPluginComponent.class
+com\example\plugins\tutorial\jira\jql\RecentProjectFunction.class
+com\example\plugins\tutorial\jira\impl\MyPluginComponentImpl.class
