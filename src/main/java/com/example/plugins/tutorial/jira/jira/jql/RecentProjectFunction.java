@@ -29,23 +29,40 @@ import java.util.List;
 public class RecentProjectFunction extends AbstractJqlFunction
 {
     private static final Logger log = LoggerFactory.getLogger(RecentProjectFunction.class);
+    @ComponentImport
+    private final UserProjectHistoryManager userProjectHistoryManager;
 
+    public RecentProjectFunction(UserProjectHistoryManager userProjectHistoryManager) {
+        this.userProjectHistoryManager = userProjectHistoryManager;
+    }
     public MessageSet validate(ApplicationUser searcher, FunctionOperand operand, TerminalClause terminalClause) {
-        return validateNumberOfArgs(operand, 1);
+        return validateNumberOfArgs(operand, 0);
     }
 
-    public List<QueryLiteral> getValues(QueryCreationContext queryCreationContext, FunctionOperand operand, TerminalClause terminalClause)
-    {
-        return Collections.singletonList(new QueryLiteral(operand, Iterables.get(operand.getArgs(), 0)));
+    public List<QueryLiteral> getValues(QueryCreationContext queryCreationContext, FunctionOperand operand, TerminalClause terminalClause) {
+        final List<QueryLiteral> literals = new LinkedList<>();
+        final List<UserHistoryItem> projects = userProjectHistoryManager.getProjectHistoryWithoutPermissionChecks(queryCreationContext.getApplicationUser());
+
+        for (final UserHistoryItem userHistoryItem : projects) {
+            final String value = userHistoryItem.getEntityId();
+
+            try {
+                literals.add(new QueryLiteral(operand, Long.parseLong(value)));
+            } catch (NumberFormatException e) {
+                log.warn(String.format("User history returned a non numeric project IS '%s'.", value));
+            }
+        }
+        return literals;
     }
 
     public int getMinimumNumberOfExpectedArguments()
     {
-        return 1;
+        return 0;
     }
 
     public JiraDataType getDataType()
     {
-        return JiraDataTypes.TEXT;
+        return JiraDataTypes.PROJECT;
     }
 }
+
